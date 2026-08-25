@@ -137,8 +137,14 @@ function pedir_datos_dia($dia){
     
 }
 
-function cargar_datos_prueba(&$lista_empleados, &$lista_citas){
-    // Ajustamos la carga de empleados con el ID como llave para que coincida con tu función agregar_empleado
+function cargar_datos_prueba(&$lista_empleados, &$lista_citas, $bloqueo_datos){
+    if(!$bloqueo_datos){
+        echo "\nLos datos ya fueron cargados\n";
+        return;
+    }
+    else {
+        $bloqueo_datos = false;
+    }
     $lista_empleados = [
         1 => ["id" => 1, "nombre" => "Rafael", "especialidades" => ["limpieza facial", "manicure"]],
         2 => ["id" => 2, "nombre" => "Julio", "especialidades" => ["pedicure", "masaje relajante"]],
@@ -163,6 +169,7 @@ function cargar_datos_prueba(&$lista_empleados, &$lista_citas){
         ["id" => 14, "cliente" => "Esteban", "dia" => "sabado", "hora" => 10, "empleado_id" => 2, "servicios" => ["limpieza facial"]],
         ["id" => 15, "cliente" => "Oscar", "dia" => "sabado", "hora" => 10, "empleado_id" => 2, "servicios" => ["manicure"]] 
     ];
+    echo "\n¡Citas cargadas con éxito!\n";
 }
 function pedir_datos_hora($mensaje) {
     while (true) {
@@ -219,13 +226,14 @@ function calcular_total_facturado($lista_citas, $lista_empleados, $lista_catalog
         return $b["total"] <=> $a["total"];
     });
 
-    echo "\n===============TOTAL FACTURADO POR EMPLEADO===============\n";
+    echo "\n===============TOTAL FACTURADO POR EMPLEADO=================\n";
     echo "------------------------------------------------------------\n";
     printf("%-20s | %-20s\n", "Empleado", "Total Facturado");
     foreach($facturacion as $factura){
         $dinero_formateado = "$" . number_format($factura["total"], 0, ',', '.');
         printf("%-20s | %-20s\n", $factura["nombre"], $dinero_formateado);
     }
+    echo "------------------------------------------------------------\n";
 }
 
 function cargar_menu(){
@@ -330,7 +338,7 @@ function registrar_cita($empleados, &$citas, $catalogo_servicios, $bloqueo_datos
                 $acceso_servicio = true;
                 
                 while($acceso_servicio){
-                    echo "\n============CATALOGO DE SERVICIOS============\n";
+                    echo "\n====================================CATALOGO DE SERVICIOS====================================\n";
                     foreach($catalogo_servicios as $catagolo){
                         $hora = ($catagolo["hora"] > 1) ? "Horas" : "Hora";
                         echo $catagolo["id"] . "). " . $catagolo["servicio"] . " --- $" . number_format($catagolo["precio"], 0, ',', '.') . " --- ". $catagolo["hora"] . " $hora\n";
@@ -338,7 +346,6 @@ function registrar_cita($empleados, &$citas, $catalogo_servicios, $bloqueo_datos
                     
                     $seleccion2 = readline("Seleccione la opcion del servicio: ");
                     
-                    // Buscamos el servicio dentro del catálogo
                     $servicio_encontrado = null;
                     foreach($catalogo_servicios as $cat) {
                         if($cat["id"] == $seleccion2) {
@@ -351,7 +358,6 @@ function registrar_cita($empleados, &$citas, $catalogo_servicios, $bloqueo_datos
                         $hora = ($servicio_encontrado["hora"] > 1) ? "Horas" : "Hora";
                         echo "\nServicio seleccionado: " . $servicio_encontrado["servicio"] . " --- $" . number_format($servicio_encontrado["precio"], 0, ',', '.') . " --- ". $servicio_encontrado["hora"] . " $hora\n" ;
                         
-                        // CORRECCIÓN: Guardamos el NOMBRE del servicio (texto) y no el número de opción
                         $servicios_de_esta_cita[] = $servicio_encontrado["servicio"];
                         echo "Servicio añadido a la lista temporal.\n";
                     } else {
@@ -421,10 +427,11 @@ function servicio_mas_solicitado($lista_citas, $catalogo_servicios){
     $servicios_ordenados = array_keys($conteo_cantidad);
     $primer_puesto = $servicios_ordenados[0] ?? null;
 
-    echo "\n==============SERVICIOS MAS SOLICITADOS==============\n";
-    echo "-------------------------------------------------------\n";
+    echo "\n==============SERVICIOS MAS SOLICITADOS======================================\n";
+    echo "-----------------------------------------------------------------------\n";
     if($primer_puesto && $conteo_cantidad[$primer_puesto] > 0){
         printf("%-25s | %-12s | %-15s\n", "Servicios", "Cantidad Que se Repite", "Total por Servicio");
+        echo "-----------------------------------------------------------------------\n";
 
         $plata_format = "$". number_format($conteo_dinero[$primer_puesto],0,",",".");
 
@@ -437,6 +444,7 @@ function servicio_mas_solicitado($lista_citas, $catalogo_servicios){
     else{
         echo "\nNo hay servicios prestados en esta semana\n";
     }
+    echo "-----------------------------------------------------------------------\n";
 
 }
 
@@ -455,12 +463,13 @@ function agendar_dia_consulta($lista_citas, $lista_empleados, $funcion_dia){
     });
 
 
-    echo "\n==============AGENDA DEL DÍA: " . $buscar_dia . "==============\n";
+    echo "\n================ AGENDA DEL DÍA: " . strtoupper($buscar_dia) . "==================\n";
     if(empty($citas_filtradas)){
         echo "\nNo hay agendada ninguna cita en los días disponibles\n";
         return;
     }
     printf("%-10s | %-12s | %-12s | %-30s\n", "Hora", "Empleado", "Cliente", "Servicio");
+    echo "-------------------------------------------------------\n";
 
     $nombre_empleado = "No tiene";
     if(isset($lista_empleados[$cita["empleado_id"]])){
@@ -477,6 +486,8 @@ function agendar_dia_consulta($lista_citas, $lista_empleados, $funcion_dia){
         $cita["cliente"],
         $servicios_unidos
     );
+
+    echo "-------------------------------------------------------\n";
 }
 
 $acceder = true;
@@ -531,8 +542,7 @@ while($acceder){
         $acceder = false;
         break;
     case "dp":
-        cargar_datos_prueba($empleados, $citas);
-        echo "\n¡Citas cargadas con éxito!\n";
+        cargar_datos_prueba($empleados, $citas, $bloqueo_datos);
         $bloqueo_datos = false;
         break;
     
