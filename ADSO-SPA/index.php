@@ -427,19 +427,23 @@ function servicio_mas_solicitado($lista_citas, $catalogo_servicios){
     $servicios_ordenados = array_keys($conteo_cantidad);
     $primer_puesto = $servicios_ordenados[0] ?? null;
 
-    echo "\n==============SERVICIOS MAS SOLICITADOS======================================\n";
-    echo "-----------------------------------------------------------------------\n";
+    echo "\n======================SERVICIOS MAS SOLICITADOS===========================\n";
+    
+    
     if($primer_puesto && $conteo_cantidad[$primer_puesto] > 0){
         printf("%-25s | %-12s | %-15s\n", "Servicios", "Cantidad Que se Repite", "Total por Servicio");
         echo "-----------------------------------------------------------------------\n";
-
-        $plata_format = "$". number_format($conteo_dinero[$primer_puesto],0,",",".");
-
-        printf("%-25s | %-22s | %-15s\n",
-            $primer_puesto,
-            $conteo_cantidad[$primer_puesto],
-            $plata_format
-        );
+        $total = count($servicios_ordenados);
+        for($i = 0; $i < $total; $i++) {
+        if(isset($servicios_ordenados[$i])){
+            $plata_format = "$". number_format($conteo_dinero[$servicios_ordenados[$i]],0,",",".");
+            printf("%-25s | %-22s | %-15s\n",
+                $servicios_ordenados[$i],
+                $conteo_cantidad[$servicios_ordenados[$i]],
+                $plata_format
+            );
+        }
+    }
     }
     else{
         echo "\nNo hay servicios prestados en esta semana\n";
@@ -453,7 +457,7 @@ function agendar_dia_consulta($lista_citas, $lista_empleados, $funcion_dia){
 
     $citas_filtradas = [];
     foreach($lista_citas as $cita){
-        if(strcasecmp(trim($buscar_dia), trim($cita["dia"]) === 0)){
+        if(strcasecmp(trim($buscar_dia), trim($cita["dia"])) === 0){
             $citas_filtradas[] = $cita;
         }
     }
@@ -462,7 +466,6 @@ function agendar_dia_consulta($lista_citas, $lista_empleados, $funcion_dia){
         return $a["hora"] <=> $b["hora"];
     });
 
-
     echo "\n================ AGENDA DEL DÍA: " . strtoupper($buscar_dia) . "==================\n";
     if(empty($citas_filtradas)){
         echo "\nNo hay agendada ninguna cita en los días disponibles\n";
@@ -470,25 +473,26 @@ function agendar_dia_consulta($lista_citas, $lista_empleados, $funcion_dia){
     }
     printf("%-10s | %-12s | %-12s | %-30s\n", "Hora", "Empleado", "Cliente", "Servicio");
     echo "-------------------------------------------------------\n";
+    
+    foreach ($citas_filtradas as $cita) {
+        $nombre_empleado = "No tiene";
+        if (isset($lista_empleados[$cita["empleado_id"]])) {
+            $nombre_empleado = $lista_empleados[$cita["empleado_id"]]["nombre"];
+        }
+        $servicios_unidos = implode(", ", $cita["servicios"]);
+        $hora_format = sprintf("%02d:00", $cita["hora"]);
 
-    $nombre_empleado = "No tiene";
-    if(isset($lista_empleados[$cita["empleado_id"]])){
-        $nombre_empleado = $lista_empleados[$cita["empleado_id"]]["nombre"];
+        printf("%-10s | %-12s | %-12s | %-30s\n",
+            $hora_format,
+            $nombre_empleado,
+            $cita["cliente"],
+            $servicios_unidos
+        );
     }
-
-    $servicios_unidos = implode(", ", $cita["servicios"]);
-
-    $hora_format = sprintf("%02d:00", $cita["hora"]);
-
-    printf("%-10s | %-12s | %-12s | %-30s\n",
-        $hora_format,
-        $nombre_empleado,
-        $cita["cliente"],
-        $servicios_unidos
-    );
 
     echo "-------------------------------------------------------\n";
 }
+
 
 $acceder = true;
 echo "\n==========Bienvenido al Centro de SPA ADSO===========\n";
